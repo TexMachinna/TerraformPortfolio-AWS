@@ -41,7 +41,7 @@ resource "aws_s3_bucket_versioning" "backend_versioning" {
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "name" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "backend_encryption" {
   bucket = aws_s3_bucket.s3_backend.id
 
   rule {
