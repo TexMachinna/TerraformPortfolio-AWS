@@ -1,6 +1,9 @@
 # Local .terraform directories
 .terraform/
 
+# Backend file (in order to avoid exposing AWS ID's)
+backend.hcl
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
