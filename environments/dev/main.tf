@@ -16,3 +16,11 @@ module "networking" {
   vpc_block           = var.vpc_block
   environment_tag     = var.environment_tag
 }
+
+module "security" {
+  source = "../../modules/security"
+
+  vpc_id          = module.networking.vpc_id
+  environment_tag = var.environment_tag
+  cidr_ipv4       = var.cidr_ipv4
+}

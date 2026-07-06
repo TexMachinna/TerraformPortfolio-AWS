@@ -23,3 +23,14 @@ output "public_cidr_block" {
   value       = module.networking.public_cidr_block
   description = "CIDR block assigned to the public subnet"
 }
+
+# Security outputs
+output "security_group_id" {
+  description = "ID of the EC2 security group"
+  value       = module.security.security_group_id
+}
+
+output "security_group_arn" {
+  description = "ARN of the EC2 security group"
+  value       = module.security.security_group_arn
+}
