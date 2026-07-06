@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module provisions the core AWS networking layer for the 'TerraformPostfolio-AWS' project.
+This module provisions the core AWS networking layer for the 'TerraformPortfolio-AWS' project.
 
 It creates:
 - VPC
@@ -27,7 +27,7 @@ VPC
 module "networking" {
   source = "../../modules/networking"
 
-  vpc_cidr            = "10.0.0.0/16"
+  vpc_block           = "10.0.0.0/16"
   public_subnet_cidr  = "10.0.1.0/24"
   private_subnet_cidr = "10.0.2.0/24"
   environment_tag     = "Dev"
@@ -37,7 +37,7 @@ module "networking" {
 
 | Name                  | Description                                 | Type          | Required |
 | --------------------- | ------------------------------------------- | ------------- | -------- |
-| `vpc_cidr`            | CIDR block for the VPC                      | `string`      | yes      |
+| `vpc_block`           | CIDR block for the VPC                      | `string`      | yes      |
 | `public_subnet_cidr`  | CIDR block for the public subnet            | `string`      | yes      |
 | `private_subnet_cidr` | CIDR block for the private subnet           | `string`      | yes      |
 | `environment_tag`     | Tags applied to module resources            | `string`      | yes      |
