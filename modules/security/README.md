@@ -24,7 +24,7 @@ It creates:
 | Name                  | Description                                 | Type          | Required |
 | --------------------- | ------------------------------------------- | ------------- | -------- |
 | `vpc_id`              | ID from the VPC                             | `string`      | yes      |
-| `cidr_ipv4`           | IPv4 blocks allowed to SSH the resources    | `string`      | yes      |
+| `cidr_ipv4`           | IPv4 blocks allowed to SSH the resources    | `string`      | no       |
 | `environment_tag`     | Tags applied to module resources            | `string`      | yes      |
 
 ## Outputs

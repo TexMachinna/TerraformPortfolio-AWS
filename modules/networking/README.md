@@ -45,11 +45,11 @@ module "networking" {
 
 ## Outputs
 
-| Name                    | Description                  |
-| ----------------------- | ---------------------------- |
-| `vpc_id`                | ID of the created VPC        |
-| `public_subnet_id`      | ID of the public subnet      |
-| `private_subnet_id`     | ID of the private subnet     |
-| `public_route_table_id` | ID of the public route table |
-| `internet_gateway_id`   | ID of the Internet Gateway   |
+| Name                    | Description                             |
+| ----------------------- | --------------------------------------- |
+| `vpc_id`                | ID of the created VPC                   |
+| `public_subnet_id`      | ID of the public subnet                 |
+| `private_subnet_id`     | ID of the private subnet                |
+| `public_cidr_block`     | CIDR block assigned to the public subnet|
+| `vpc_cidr_block`        | CIDR block assigned to the VPC          |
 
