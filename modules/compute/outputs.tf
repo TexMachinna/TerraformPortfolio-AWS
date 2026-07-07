@@ -3,6 +3,11 @@ output "asg_id" {
   value       = aws_autoscaling_group.this.id
 }
 
+output "asg_name" {
+  description = "Name of the ASG"
+  value       = aws_autoscaling_group.this.name
+}
+
 output "asg_arn" {
   description = "ARN of the compute ASG"
   value       = aws_autoscaling_group.this.arn
