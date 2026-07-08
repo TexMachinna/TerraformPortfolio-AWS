@@ -46,7 +46,7 @@ I --> J
 terraform-cloud-infra-lab/
 
 ├── bootstrap/
-│   └── remote-state/
+│   └── remotestate/
 │
 ├── modules/
 │   ├── networking/
