@@ -12,28 +12,30 @@ Rather than focusing solely on deploying AWS resources, this repository emphasiz
 
 # Architecture
 
-```text
-                               AWS Cloud
+```mermaid
+graph TD
 
-                                 Internet
-                                     │
-                             Internet Gateway
-                                     │
-                             ┌──────────────┐
-                             │     VPC      │
-                             └──────────────┘
-                              │            │
-                      Public Subnet   Private Subnet
-                              │
-                    Auto Scaling Group
-                              │
-                      Launch Template
+A[Internet]
 
-                      CloudWatch Monitoring
+A --> B[Internet Gateway]
 
-Terraform Remote State
-├── Amazon S3
-└── DynamoDB State Locking
+B --> C[VPC]
+
+C --> D[Public Subnet]
+
+C --> E[Private Subnet]
+
+D --> F[Launch Template]
+
+F --> G[Auto Scaling Group]
+
+G --> H[CloudWatch Alarm]
+
+I[S3 Backend]
+
+J[DynamoDB Lock]
+
+I --> J
 ```
 
 ---
