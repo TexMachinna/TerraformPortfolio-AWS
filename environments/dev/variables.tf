@@ -29,7 +29,7 @@ variable "private_subnet_cidr" {
 variable "cidr_ipv4" {
   description = "IPv4 blocks allowed to SSH the resources"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = ""
 }
 
 # Compute variables
