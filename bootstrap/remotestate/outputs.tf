@@ -12,8 +12,3 @@ output "s3_backend_bucket_name" {
   description = "Name for the S3 backend bucket"
   value       = aws_s3_bucket.s3_backend.bucket
 }
-
-output "dynamodb_table_lock_name" {
-  description = "Name for the DynamoDB table used for locking"
-  value       = aws_dynamodb_table.terraform_locks.name
-}

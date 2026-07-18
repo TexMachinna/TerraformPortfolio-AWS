@@ -3,9 +3,3 @@ variable "aws_region" {
   type        = string
   default     = "us-east-1"
 }
-
-variable "dynamodb_table_lock_name" {
-  description = "Name for the DynamoDB Table responsible for locking"
-  type        = string
-  default     = "backend_lock"
-}
