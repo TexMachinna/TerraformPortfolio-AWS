@@ -52,6 +52,11 @@ variable "asg_desired_size" {
   type        = number
 }
 
+variable "key_name" {
+  description = "EC2 Key Pair name"
+  type        = string
+}
+
 # Monitoring variables
 
 variable "cloudwatch_period" {
