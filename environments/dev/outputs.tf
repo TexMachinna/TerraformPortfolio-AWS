@@ -66,6 +66,11 @@ output "asg_desired_size" {
   value       = module.compute.asg_desired_size
 }
 
+output "asg_public_ips" {
+  description = "Public IPs from the ASG instances"
+  value = module.compute.asg_instance_public_ips
+}
+
 # Monitoring outputs
 
 output "cloudwatch_metric_arn" {

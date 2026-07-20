@@ -1,0 +1,42 @@
+---
+- name: Configure development web servers
+  hosts: dev
+  become: true
+
+  vars:
+    page_title: Terraform portfolio
+    inventory: Development
+
+  tasks:
+    - name: Install Apache
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+
+    - name: Start and enable Apache
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Deploy portfolio landing page
+      ansible.builtin.template:
+        src: ../templates/index.html.j2
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Verify web application responds successfully
+      ansible.builtin.uri:
+        url: http://localhost
+        return_content: true
+        status_code: 200
+      register: web_response
+
+    - name: Verify expected page content
+      ansible.builtin.assert:
+        that:
+          - "'Terraform portfolio' in web_response.content"
+        fail_msg: The webpage loaded, but the expected content was not found.
+        success_msg: The portfolio landing page was deployed successfully.
