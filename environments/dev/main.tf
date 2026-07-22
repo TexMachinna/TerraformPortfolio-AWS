@@ -49,3 +49,14 @@ module "monitoring" {
   cloudwatch_period      = var.cloudwatch_period
   cloudwatch_eval_period = var.cloudwatch_eval_period
 }
+
+module "ansible_inventory" {
+  source = "../../modules/ansible_inventory"
+
+  environment = var.environment_tag
+  public_ips  = module.compute.asg_instance_public_ips
+
+  inventory_path = abspath(
+    "${path.root}/../../ansible/inventories/${var.environment_tag}/hosts.ini"
+  )
+}
