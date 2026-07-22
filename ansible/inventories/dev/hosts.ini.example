@@ -5,5 +5,4 @@ dev-web-1 ansible_host=PUBLIC_IP_HERE
 web
 
 [dev:vars]
-ansible_python_interpreter=/usr/bin/python3.9
 ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
