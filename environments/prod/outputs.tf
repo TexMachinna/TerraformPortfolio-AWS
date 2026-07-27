@@ -114,7 +114,7 @@ output "instance_profile_name" {
 
 output "instance_profile_arn" {
   description = "ARN of the IAM instance profile"
-  value       = module.application_identity
+  value       = module.application_identity.instance_profile_arn
 }
 
 output "role_name" {
