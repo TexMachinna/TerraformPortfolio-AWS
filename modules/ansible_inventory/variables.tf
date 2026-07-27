@@ -4,7 +4,7 @@ variable "environment" {
 }
 
 variable "public_ips" {
-  description = "Public IP addressess of the web servers"
+  description = "Public IP addresses of the web servers"
   type        = list(string)
 }
 

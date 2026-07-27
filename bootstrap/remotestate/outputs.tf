@@ -1,6 +1,6 @@
 output "region" {
   description = "Region where the S3 and DynamoDB resources dedicated to be the backend will be deployed"
-  value = var.aws_region
+  value       = var.aws_region
 }
 
 output "s3_backend_bucket_arn" {

@@ -10,12 +10,12 @@ variable "vpc_id" {
 
 variable "cidr_ipv4" {
   description = "IPv4 blocks allowed to SSH the resources"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "cidr_http" {
   description = "CIDR permitted to access the web servers"
-  type = string
-  default = "0.0.0.0/0"
+  type        = string
+  default     = "0.0.0.0/0"
 }
