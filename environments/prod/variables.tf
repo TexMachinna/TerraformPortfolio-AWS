@@ -74,7 +74,7 @@ variable "cloudwatch_threshold" {
   type        = number
 }
 
-# Dyanmo DB variables
+# DynamoDB variables
 
 variable "project_name" {
   description = "Project name used to construct the DynamoDB Table"

@@ -4,7 +4,7 @@ variable "project_name" {
 }
 
 variable "environment_tag" {
-  description = "Deployment nevironment"
+  description = "Deployment environment"
   type        = string
 }
 

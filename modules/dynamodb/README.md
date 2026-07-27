@@ -38,7 +38,7 @@ module "dynamodb" {
 
 | Name                    | Description                          |
 | ----------------------- | ------------------------------------ |
-| `table_name`            | Name of the DynamoDB messages table" |
+| `table_name`            | Name of the DynamoDB messages table  |
 | `table_arn`             | ARN of the DynamoDB messages table   |
 | `table_id`              | ID of the DynamoDB messages table    |
 | `asg_max_size`          | Maximum size of the ASG              |

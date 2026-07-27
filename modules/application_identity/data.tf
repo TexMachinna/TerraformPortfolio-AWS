@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "dynamodb_access" {
 }
 
 resource "aws_iam_instance_profile" "this" {
-  name = "${local.name_prefix}-applicaion-profile"
+  name = "${local.name_prefix}-application-profile"
   role = aws_iam_role.this.name
 
   tags = {
