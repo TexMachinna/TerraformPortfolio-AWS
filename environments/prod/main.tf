@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    key = "prod/terraform.tfstate"
+    key = "dev/terraform.tfstate"
   }
 }
 
@@ -59,4 +59,25 @@ module "ansible_inventory" {
   inventory_path = abspath(
     "${path.root}/../../ansible/inventories/${var.environment_tag}/hosts.ini"
   )
+}
+
+module "dynamodb" {
+  source = "../../modules/dynamodb"
+
+  project_name    = var.project_name
+  environment_tag = var.environment_tag
+
+  read_capacity  = var.read_capacity
+  write_capacity = var.write_capacity
+
+  deletion_protection_enabled = var.deletion_protection_enabled
+}
+
+module "application_identity" {
+  source = "../../modules/application_identity"
+
+  project_name    = var.project_name
+  environment_tag = var.environment_tag
+
+  dynamodb_table_arn = module.dynamodb.table_arn
 }

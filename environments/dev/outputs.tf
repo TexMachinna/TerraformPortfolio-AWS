@@ -68,7 +68,7 @@ output "asg_desired_size" {
 
 output "asg_public_ips" {
   description = "Public IPs from the ASG instances"
-  value = module.compute.asg_instance_public_ips
+  value       = module.compute.asg_instance_public_ips
 }
 
 # Monitoring outputs
@@ -86,4 +86,48 @@ output "cloudwatch_metric_cpu_threshold" {
 output "cloudwatch_period" {
   description = "Period in which the metric operates"
   value       = module.monitoring.cloudwatch_period
+}
+
+# DynamoDB outputs
+
+output "table_name" {
+  description = "Name of the DynamoDB messages table"
+  value       = module.dynamodb.table_name
+}
+
+output "table_arn" {
+  description = "ARN of the DynamoDB messages table"
+  value       = module.dynamodb.table_arn
+}
+
+output "table_id" {
+  description = "ID of the DynamoDB messages table"
+  value       = module.dynamodb.table_id
+}
+
+# Application_identity outputs
+
+output "instance_profile_name" {
+  description = "Name of the IAM instance profile for the application instances"
+  value       = module.application_identity.instance_profile_name
+}
+
+output "instance_profile_arn" {
+  description = "ARN of the IAM instance profile"
+  value       = module.application_identity
+}
+
+output "role_name" {
+  description = "Name of the application EC2 IAM role"
+  value       = module.application_identity.role_name
+}
+
+output "role_arn" {
+  description = "ARN of the application EC2 IAM role"
+  value       = module.application_identity.role_arn
+}
+
+output "policy_arn" {
+  description = "ARN of the DynamoDB access policy"
+  value       = module.application_identity.policy_arn
 }
