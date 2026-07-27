@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0.0"
     }
+    http = {
+      source = "hashicorp/http"
+      version = "~> 3.0"
+    }
   }
 
   required_version = ">= 1.0.0, < 2.0.0"
@@ -21,10 +25,18 @@ resource "aws_security_group" "this" {
 
 resource "aws_vpc_security_group_ingress_rule" "ssh" {
   security_group_id = aws_security_group.this.id
-  cidr_ipv4         = var.cidr_ipv4
+  cidr_ipv4         = local.effective_ssh_cidr
   ip_protocol       = "tcp"
   from_port         = 22
   to_port           = 22
+}
+
+resource "aws_vpc_security_group_ingress_rule" "http" {
+  security_group_id = aws_security_group.this.id
+  cidr_ipv4         = var.cidr_http
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
 }
 
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {

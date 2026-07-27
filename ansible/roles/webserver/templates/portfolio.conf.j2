@@ -1,0 +1,13 @@
+# Managed by Ansible
+<VirtualHost *:{{ webserver_listen_port }}>
+    ServerName localhost
+    DocumentRoot "{{ webserver_document_root }}"
+
+    <Directory "{{ webserver_document_root }}">
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ErrorLog logs/portfolio_error.log
+    CustomLog logs/portfolio_access.log combined
+</VirtualHost>

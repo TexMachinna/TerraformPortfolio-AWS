@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+webserver_package_name: httpd
+webserver_service_name: httpd
+webserver_document_root: /var/www/html
+webserver_index_file: index.html
+webserver_listen_port: 80
+webserver_config_path: /etc/httpd/conf.d/portfolio.conf
+webserver_verify_url: http://localhost/

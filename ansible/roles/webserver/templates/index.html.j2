@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ page_title }}</title>
+  </head>
+
+  <body>
+    <h1>{{ page_title }}</h1>
+    <h2>Environment: {{ environment_name }}</h2>
+
+    <p>
+      Provisioned with Terraform and configured with Ansible.
+    </p>
+
+    <p>
+      Served from {{ webserver_document_root }}
+      on port {{ webserver_listen_port }}
+    </p>
+  </body>
+</html>

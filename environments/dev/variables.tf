@@ -29,7 +29,7 @@ variable "private_subnet_cidr" {
 variable "cidr_ipv4" {
   description = "IPv4 blocks allowed to SSH the resources"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = ""
 }
 
 # Compute variables
@@ -52,6 +52,11 @@ variable "asg_desired_size" {
   type        = number
 }
 
+variable "key_name" {
+  description = "EC2 Key Pair name"
+  type        = string
+}
+
 # Monitoring variables
 
 variable "cloudwatch_period" {
@@ -67,4 +72,29 @@ variable "cloudwatch_eval_period" {
 variable "cloudwatch_threshold" {
   description = "CPU utilization threshold for the CloudWatch Metric alarm"
   type        = number
+}
+
+# Dyanmo DB variables
+
+variable "project_name" {
+  description = "Project name used to construct the DynamoDB Table"
+  type        = string
+}
+
+variable "read_capacity" {
+  description = "Provisioned read capacity units for the DynamoDB Table"
+  type        = number
+  default     = 1
+}
+
+variable "write_capacity" {
+  description = "Provisioned write capacity units for the DynamoDB Table"
+  type        = number
+  default     = 1
+}
+
+variable "deletion_protection_enabled" {
+  description = "Whether DynamoDB deletion is enabled" # Keep as 'disabled' so 'terraform destroy' can delete it
+  type        = bool
+  default     = false
 }

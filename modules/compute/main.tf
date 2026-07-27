@@ -12,6 +12,7 @@ resource "aws_launch_template" "this" {
   name_prefix            = "${var.environment_tag}_launch_template"
   image_id               = data.aws_ami.amazon_linux.id
   instance_type          = var.instance_type
+  key_name               = var.key_name
   vpc_security_group_ids = [var.security_group_id]
 }
 

@@ -1,0 +1,46 @@
+---
+- name: Install Apache
+  ansible.builtin.dnf:
+    name: "{{ webserver_package_name }}"
+    state: present
+
+- name: Start and enable Apache
+  ansible.builtin.service:
+    name: "{{ webserver_service_name }}"
+    state: started
+    enabled: true
+
+- name: Deploy Apache virtual host configuration
+  ansible.builtin.template:
+    src: portfolio.conf.j2
+    dest: "{{ webserver_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Apache
+
+- name: Deploy portfolio landing page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ webserver_document_root }}/{{webserver_index_file}}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Apply pending handlers before verification
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify web application responds successfully
+  ansible.builtin.uri:
+    url: "{{ webserver_verify_url }}"
+    return_content: true
+    status_code: 200
+  register: web_response
+
+- name: Verify expected page content
+  ansible.builtin.assert:
+    that:
+      - "page_title in web_response.content"
+      - "environment_name in web_response.content"
+    fail_msg: The webpage loaded, but the expected content was not found.
+    success_msg: The portfolio page was deployed successfully.

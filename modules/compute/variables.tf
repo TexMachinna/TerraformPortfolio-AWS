@@ -8,6 +8,11 @@ variable "instance_type" {
   type        = string
 }
 
+variable "key_name" {
+  description = "Name of the EC2 key pair used for SSH access"
+  type        = string
+}
+
 variable "subnet_id" {
   description = "ID of the subnet assigned to the compute resources"
   type        = string
