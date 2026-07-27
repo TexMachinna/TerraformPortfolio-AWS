@@ -37,6 +37,8 @@ module "compute" {
 
   subnet_id         = module.networking.public_subnet_id
   security_group_id = module.security.security_group_id
+
+  iam_instance_profile_name = module.application_identity.instance_profile_name
 }
 
 module "monitoring" {

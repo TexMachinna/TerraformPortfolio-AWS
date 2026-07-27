@@ -37,3 +37,8 @@ variable "asg_desired_size" {
   description = "Desired size for the ASG"
   type        = number
 }
+
+variable "iam_instance_profile_name" {
+  description = "Name of the IAM instance profile attached to EC2 instances"
+  type        = string
+}

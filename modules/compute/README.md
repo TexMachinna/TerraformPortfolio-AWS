@@ -14,29 +14,32 @@ It creates:
 module "compute" {
   source = "../../modules/compute"
 
-  environment_tag = var.environment_tag
-
+  environment_tag  = var.environment_tag
   instance_type    = var.instance_type
   asg_desired_size = var.asg_desired_size
   asg_max_size     = var.asg_max_size
   asg_min_size     = var.asg_min_size
+  key_name         = var.key_name
 
   subnet_id         = module.networking.public_subnet_id
   security_group_id = module.security.security_group_id
+
+  iam_instance_profile_name = module.application_identity.instance_profile_name
 }
 ```
 
 ## Inputs
 
-| Name                  | Description                                                 | Type          | Required |
-| --------------------- | ----------------------------------------------------------- | ------------- | -------- |
-| `instance_type`       | Type (size) of instance to be used                          | `string`      | yes      |
-| `subnet_id`           | IPv4 blocks allowed to SSH the resources                    | `string`      | yes      |
-| `environment_tag`     | Tags applied to module resources                            | `string`      | yes      |
-| `security_group_id`   | ID of the security group assigned to the compute resources  | `string`      | yes      |
-| `asg_min_size`        | Minimum size for the ASG                                    | `number`      | yes      |
-| `asg_max_size`        | Maximum size for the ASG                                    | `number`      | yes      |
-| `asg_desired_size`    | Desired size for the ASG                                    | `number`      | yes      |
+| Name                        | Description                                                 | Type          | Required |
+| --------------------------- | ----------------------------------------------------------- | ------------- | -------- |
+| `instance_type`             | Type (size) of instance to be used                          | `string`      | yes      |
+| `subnet_id`                 | IPv4 blocks allowed to SSH the resources                    | `string`      | yes      |
+| `environment_tag`           | Tags applied to module resources                            | `string`      | yes      |
+| `security_group_id`         | ID of the security group assigned to the compute resources  | `string`      | yes      |
+| `asg_min_size`              | Minimum size for the ASG                                    | `number`      | yes      |
+| `asg_max_size`              | Maximum size for the ASG                                    | `number`      | yes      |
+| `asg_desired_size`          | Desired size for the ASG                                    | `number`      | yes      |
+| `iam_instance_profile_name` | Name of the IAM instance profile attached to EC2 instances  | `string`      | yes      |
 
 ## Outputs
 

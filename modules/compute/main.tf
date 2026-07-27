@@ -14,6 +14,10 @@ resource "aws_launch_template" "this" {
   instance_type          = var.instance_type
   key_name               = var.key_name
   vpc_security_group_ids = [var.security_group_id]
+
+  iam_instance_profile {
+    name = var.iam_instance_profile_name
+  }
 }
 
 resource "aws_autoscaling_group" "this" {
@@ -23,7 +27,7 @@ resource "aws_autoscaling_group" "this" {
   vpc_zone_identifier = [var.subnet_id]
   launch_template {
     id      = aws_launch_template.this.id
-    version = "$Latest"
+    version = aws_launch_template.this.latest_version
   }
 
   tag {

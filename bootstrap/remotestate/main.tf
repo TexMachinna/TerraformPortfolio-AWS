@@ -22,7 +22,7 @@ locals {
 }
 
 resource "aws_s3_bucket" "s3_backend" {
-  bucket = local.s3_backend_bucket_name
+  bucket              = local.s3_backend_bucket_name
   object_lock_enabled = true
 
   lifecycle {
