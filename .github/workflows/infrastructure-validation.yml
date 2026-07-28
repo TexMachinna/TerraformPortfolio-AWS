@@ -1,0 +1,126 @@
+---
+name: Infrastructure Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    
+permissions:
+  contents: read
+
+concurrency:
+  group: infrastructure-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: Terraform validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      CHECKPOINT_DISABLE: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.14.6"
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive -diff
+
+      - name: Initialize and validate Terraform root modules
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          terraform_roots=(
+            "bootstrap/remote-state"
+            "environments/dev"
+            "environments/prod"
+          )
+
+          for directory in "${terraform_roots[@]}"; do
+            echo "::group:Validating ${directory}"
+
+            terraform \
+              -chdir="${directory}" \
+              init \
+              -backend=false \
+              -input=false \
+              -no-color
+
+            terraform \
+              -chdir="${directory}" \
+              validate \
+              -no-color
+
+            echo "::endgroup::"
+          done
+  
+  ansible:
+    name: Ansible validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.13"
+
+    - name: Install Ansible development tools
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install ansible-dev-tools
+
+    - name: Validate example inventories
+      working-directory: ansible
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        ansible-inventory \
+          -i inventories/dev/hosts.ini.example \
+          --graph
+
+        ansible-inventory \
+          -i inventories/prod/hosts.ini.example \
+          --graph
+
+    - name: Run Ansible lint
+      working-directory: ansible
+      run: ansible-lint .
+
+    - name: Check playbook syntax
+      working-directory: ansible
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        for environment in dev prod; do
+          echo "::group:Syntax check: ${environment}"
+
+          ansible-playbook \
+            -i "inventories/${environment}/hosts.ini.example" \
+            playbooks/webserver.yml \
+            --syntax-check
+
+          echo "::endgroup::"
+        done
