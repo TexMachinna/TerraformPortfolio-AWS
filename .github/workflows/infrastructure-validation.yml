@@ -48,7 +48,7 @@ jobs:
           set -euo pipefail
 
           terraform_roots=(
-            "bootstrap/remote-state"
+            "bootstrap/remotestate"
             "environments/dev"
             "environments/prod"
           )
