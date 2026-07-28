@@ -1,24 +1,27 @@
 # AWS Infrastructure Automation Portfolio
 
-A cost-conscious infrastructure and configuration-management portfolio built with **Terraform**, **AWS**, and **Ansible**.
+[![Infrastructure Validation](https://github.com/TexMachinna/TerraformPortfolio-AWS/actions/workflows/infrastructure-validation.yml/badge.svg)](https://github.com/TexMachinna/TerraformPortfolio-AWS/actions/workflows/infrastructure-validation.yml)
 
-The project models the deployment of a web application platform across separate development and production environments. Terraform provisions and composes the AWS infrastructure, generates environment-specific Ansible inventories, and creates the initial application data and IAM resources. Ansible converts the EC2 instances into consistently configured Apache web servers through a reusable role.
+A cost-conscious infrastructure and configuration-management portfolio built with **Terraform**, **AWS**, **Ansible**, and **GitHub Actions**.
 
-> **Project status:** Active development. The current implementation provisions the infrastructure, creates the DynamoDB and IAM resources, generates Ansible inventories, and configures the web tier. Attaching the application instance profile to the Launch Template and validating DynamoDB access from EC2 are the next integration steps.
+The project models the automated delivery of an AWS web-server platform across separate development and production environments. Terraform provisions and composes the cloud infrastructure, creates environment-scoped application identity and data resources, and generates Ansible inventories from live infrastructure outputs. Ansible configures the EC2 application tier through a reusable Apache role. GitHub Actions validates both codebases before changes reach the protected `main` branch.
+
+> **Project status:** The current implementation provisions the AWS infrastructure, attaches a least-privilege IAM instance profile to the EC2 Launch Template, generates environment-specific Ansible inventories, configures and verifies the Apache web tier, and validates DynamoDB access from EC2 using temporary role credentials. Terraform and Ansible changes are automatically checked through GitHub Actions.
 
 ---
 
 ## Project Goals
 
-This repository is designed to demonstrate practical skills relevant to Cloud, Infrastructure, Platform, and DevOps engineering roles:
+This repository demonstrates practical skills relevant to Cloud, Infrastructure, Platform, Automation, and DevOps engineering roles:
 
-- Build reusable Terraform modules instead of monolithic configurations.
+- Build reusable Terraform modules instead of a monolithic configuration.
 - Maintain independent `dev` and `prod` root modules and state files.
 - Connect Terraform outputs to Ansible automatically.
-- Apply repeatable server configuration with Ansible roles, templates, variables, handlers, and verification tasks.
+- Apply repeatable server configuration through Ansible roles, templates, variables, handlers, and verification tasks.
 - Use an Auto Scaling Group as the foundation for replaceable compute.
-- Externalize application data into DynamoDB as the project evolves toward stateless compute.
-- Grant workloads least-privilege AWS access through IAM roles rather than static access keys.
+- Externalize persistent application data into DynamoDB as the project evolves toward stateless compute.
+- Grant EC2 workloads least-privilege AWS access through IAM roles instead of static access keys.
+- Validate Terraform and Ansible changes automatically before merge.
 - Keep the lab inexpensive and easy to destroy when it is not in use.
 
 ---
@@ -27,8 +30,14 @@ This repository is designed to demonstrate practical skills relevant to Cloud, I
 
 ```mermaid
 graph TD
-    User[User / Ansible Controller]
+    Engineer[Engineer / Ansible Controller]
     Internet[Internet]
+
+    subgraph GitHub[GitHub Repository]
+        PR[Pull Request]
+        GHA[GitHub Actions Validation]
+        Main[Protected main Branch]
+    end
 
     subgraph AWS[AWS Account]
         subgraph VPC[VPC]
@@ -54,10 +63,14 @@ graph TD
         subgraph IAM[Application Identity]
             Trust[EC2 Trust Policy]
             Role[EC2 IAM Role]
-            Policy[Least-Privilege DynamoDB Policy]
+            Policy[Table-Scoped DynamoDB Policy]
             Profile[IAM Instance Profile]
         end
     end
+
+    Engineer --> PR
+    PR --> GHA
+    GHA -->|Required checks pass| Main
 
     Internet --> IGW
     IGW --> Public
@@ -70,24 +83,28 @@ graph TD
     Trust --> Role
     Policy --> Role
     Role --> Profile
-    Profile -. attachment pending .-> LT
+    Profile --> LT
     Policy --> DDB
+    EC2 -->|Temporary role credentials| DDB
 
-    User -->|SSH / Ansible| EC2
+    Engineer -->|SSH / Ansible| EC2
     Internet -->|HTTP 80| Apache
 ```
 
 ### Current architectural boundaries
 
-- The Auto Scaling Group currently uses one public subnet and normally runs a single EC2 instance to minimize cost.
+- The Auto Scaling Group currently uses one public subnet and normally runs one EC2 instance to minimize cost.
 - The private subnet is provisioned for future architecture work but is not currently used by the application tier.
-- DynamoDB is provisioned as the future persistent data layer for a stateless application.
-- The IAM role, table-scoped policy, and instance profile are defined. The profile still needs to be passed into the compute module and attached to the Launch Template.
-- There is no Application Load Balancer or scaling policy yet. The current CloudWatch resource is an alarm only.
+- DynamoDB is provisioned as the persistent data layer for a future stateless workload.
+- The environment-specific IAM instance profile is attached to the EC2 Launch Template.
+- EC2 obtains temporary credentials through the attached role; no application access keys are installed on the instance.
+- The current CloudWatch resource is an alarm only and is not connected to a scaling action.
+- There is no Application Load Balancer yet.
+- The current application payload is intentionally limited to an Apache landing page; the project focuses on infrastructure automation rather than web development.
 
 ---
 
-## Terraform and Ansible Workflow
+## Infrastructure and Configuration Workflow
 
 ```mermaid
 sequenceDiagram
@@ -97,27 +114,32 @@ sequenceDiagram
     participant Inventory as hosts.ini.tftpl
     participant Ansible
     participant EC2
+    participant DynamoDB
 
     Engineer->>Terraform: terraform apply in environments/dev or prod
-    Terraform->>AWS: Create networking, security, ASG, DynamoDB, IAM, and monitoring resources
+    Terraform->>AWS: Create networking, security, ASG, monitoring, DynamoDB, and IAM resources
+    Terraform->>AWS: Attach environment instance profile to Launch Template
     AWS-->>Terraform: Return ASG instance public IP addresses
     Terraform->>Inventory: Render environment name and public IP list
     Inventory-->>Terraform: Generate ansible/inventories/<env>/hosts.ini
     Engineer->>Ansible: Run playbooks/webserver.yml with generated inventory
-    Ansible->>EC2: Connect over SSH
-    Ansible->>EC2: Apply webserver role
+    Ansible->>EC2: Connect over SSH and apply webserver role
     Ansible->>EC2: Install Apache and deploy configuration/templates
     Ansible->>EC2: Verify HTTP 200 and expected page content
+    EC2->>AWS: Obtain temporary credentials from instance metadata
+    EC2->>DynamoDB: Access the environment table through the IAM role
 ```
 
 Terraform and Ansible have separate responsibilities:
 
 | Layer | Responsibility |
 | --- | --- |
-| Terraform | AWS resources, environment composition, dependencies, state, outputs, IAM, and generated inventory files |
+| Terraform | AWS resources, module composition, dependencies, state, IAM, outputs, and generated inventory files |
 | Ansible inventory | Defines the current hosts and environment hierarchy consumed by Ansible |
-| Ansible `group_vars` | Supplies environment-specific presentation values for the `web` group |
+| Ansible `group_vars` | Supplies environment-specific values to the shared `web` group |
 | Ansible role | Installs and configures Apache, deploys templates, runs handlers, and verifies the web service |
+| GitHub Actions | Performs static Terraform and Ansible validation on pull requests and changes to `main` |
+| GitHub ruleset | Requires pull requests and successful validation checks before merge into `main` |
 
 ---
 
@@ -125,6 +147,10 @@ Terraform and Ansible have separate responsibilities:
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── infrastructure-validation.yml
+│
 ├── README.md
 ├── .gitignore
 │
@@ -155,6 +181,7 @@ Terraform and Ansible have separate responsibilities:
 │   └── application_identity/
 │
 └── ansible/
+    ├── ansible.cfg
     ├── inventories/
     │   ├── dev/
     │   │   ├── hosts.ini.example
@@ -166,15 +193,17 @@ Terraform and Ansible have separate responsibilities:
     │   └── webserver.yml
     └── roles/
         └── webserver/
+            ├── README.md
             ├── defaults/main.yml
             ├── handlers/main.yml
+            ├── meta/main.yml
             ├── tasks/main.yml
             └── templates/
                 ├── index.html.j2
                 └── portfolio.conf.j2
 ```
 
-The real `hosts.ini` files are generated locally by Terraform and ignored by Git. The committed `.example` files document their expected format.
+The real `hosts.ini` files are generated locally by Terraform and ignored by Git. The committed `.example` inventories document their expected format and allow CI syntax validation without requiring live EC2 addresses.
 
 ---
 
@@ -208,10 +237,11 @@ Creates:
 
 - Latest matching Amazon Linux 2023 AMI lookup
 - EC2 Launch Template
+- Environment-specific IAM instance-profile attachment
 - Auto Scaling Group
 - ASG instance public-IP discovery output
 
-The current ASG accepts configurable minimum, maximum, and desired capacity values, but uses a single subnet and does not yet have a load balancer or scaling policy.
+The Auto Scaling Group explicitly consumes the latest Launch Template version. The current deployment uses a single subnet and does not yet include a load balancer or scaling policy.
 
 ### `monitoring`
 
@@ -243,7 +273,7 @@ The generated inventory includes:
 - Friendly host aliases such as `dev-web-1`
 - The current EC2 public IP through `ansible_host`
 - A parent environment group such as `[dev:children]`
-- Project-specific SSH host-key options for disposable lab instances
+- Project-specific SSH host-key options for frequently recreated lab instances
 
 ### `dynamodb`
 
@@ -263,30 +293,43 @@ Example names:
 <project>-prod-messages
 ```
 
-The module exposes the table name, ARN, and ID for use by other modules.
+The module exposes the table name, ARN, and ID for use by other modules and environment outputs.
 
 ### `application_identity`
 
-Creates the workload identity intended for the EC2 application tier:
+Creates the EC2 workload identity used by the application tier:
 
 - EC2 assume-role trust policy
 - EC2 IAM role
 - Customer-managed DynamoDB permissions policy
-- Policy attachment
+- Role-policy attachment
 - IAM instance profile
 
-The permissions policy is restricted to the DynamoDB table ARN received from the current environment and permits only:
+The permissions policy receives the current environment's DynamoDB table ARN and permits only:
 
 - `dynamodb:DescribeTable`
 - `dynamodb:GetItem`
 - `dynamodb:PutItem`
 - `dynamodb:Query`
 
-No application access keys are stored in Terraform or Ansible. Attaching the profile to the Launch Template and testing the temporary EC2 credentials are the next tasks.
+The instance-profile name is passed to the compute module and attached to the EC2 Launch Template. EC2 then obtains temporary credentials automatically from the Instance Metadata Service.
+
+No application access keys are stored in Terraform, Ansible, the repository, or the EC2 configuration.
 
 ---
 
 ## Ansible Implementation
+
+### Project configuration
+
+The committed `ansible/ansible.cfg` defines portable project-level behavior, including:
+
+- `roles_path = ./roles`
+- `remote_user = ec2-user`
+- Silent Python-interpreter discovery
+- Disabled retry-file generation
+
+The SSH private-key path is intentionally not committed. It can be provided locally with `ANSIBLE_PRIVATE_KEY_FILE` or `--private-key`.
 
 ### Inventory and environment variables
 
@@ -297,7 +340,7 @@ ansible/inventories/dev/hosts.ini
 ansible/inventories/prod/hosts.ini
 ```
 
-Ansible automatically combines each generated inventory with its corresponding variables:
+Ansible combines the generated inventory with its corresponding variables:
 
 ```text
 ansible/inventories/<environment>/group_vars/web.yml
@@ -310,7 +353,7 @@ Development and production use the same playbook and role while receiving differ
 
 ### `webserver` role
 
-The role currently:
+The reusable role:
 
 1. Installs Apache (`httpd`).
 2. Starts and enables the Apache service.
@@ -318,8 +361,9 @@ The role currently:
 4. Notifies a handler when the Apache configuration changes.
 5. Reloads Apache only when required.
 6. Renders the environment-specific landing page.
-7. Verifies that the local web endpoint returns HTTP `200`.
-8. Asserts that the expected environment and page title appear in the response.
+7. Flushes pending handlers before verification.
+8. Verifies that the local web endpoint returns HTTP `200`.
+9. Asserts that the expected environment and page title appear in the response.
 
 ```mermaid
 flowchart TD
@@ -330,7 +374,7 @@ flowchart TD
     ApacheTemplate[portfolio.conf.j2]
     PageTemplate[index.html.j2]
     Handler[Reload Apache handler]
-    Verify[URI and assert verification]
+    Verify[URI and content assertions]
 
     Playbook --> Role
     Defaults --> Role
@@ -338,8 +382,82 @@ flowchart TD
     Role --> ApacheTemplate
     Role --> PageTemplate
     ApacheTemplate -->|changed| Handler
+    Handler --> Verify
     Role --> Verify
 ```
+
+A second playbook run should normally report `changed=0`, demonstrating idempotent configuration when the desired state has not changed.
+
+---
+
+## GitHub Actions Validation
+
+The repository includes:
+
+```text
+.github/workflows/infrastructure-validation.yml
+```
+
+The workflow runs on:
+
+- Pull requests targeting `main`
+- Pushes to `main`
+- Manual execution through `workflow_dispatch`
+
+```mermaid
+flowchart LR
+    Change[Feature-branch change]
+    PR[Pull request to main]
+
+    subgraph Workflow[Infrastructure Validation]
+        TF[Terraform validation]
+        ANS[Ansible validation]
+    end
+
+    Rules[Required status checks]
+    Main[Protected main branch]
+
+    Change --> PR
+    PR --> TF
+    PR --> ANS
+    TF --> Rules
+    ANS --> Rules
+    Rules -->|Both pass| Main
+    Rules -->|Any failure| Blocked[Merge blocked]
+```
+
+### Terraform job
+
+The Terraform job:
+
+- Checks out the repository.
+- Installs the pinned Terraform version.
+- Runs `terraform fmt -check -recursive -diff`.
+- Initializes each root module with `-backend=false`.
+- Validates:
+  - `bootstrap/remotestate`
+  - `environments/dev`
+  - `environments/prod`
+
+Because backend initialization is disabled, these static checks do not need AWS credentials and do not access or modify remote state.
+
+### Ansible job
+
+The Ansible job:
+
+- Checks out the repository on a separate runner.
+- Installs Python and `ansible-dev-tools`.
+- Parses the committed development and production example inventories.
+- Runs `ansible-lint` across the `ansible` directory.
+- Runs `ansible-playbook --syntax-check` against the webserver playbook for both environments.
+
+These checks do not connect to EC2 and do not require an SSH private key.
+
+### Repository governance
+
+The workflow publishes separate status checks for Terraform and Ansible. The `main` branch ruleset requires pull-request validation before merge.
+
+> GitHub branch rulesets are repository settings rather than tracked files, so the rule itself is not represented inside this source tree.
 
 ---
 
@@ -348,14 +466,22 @@ flowchart TD
 The `bootstrap/remotestate` configuration creates a protected S3 bucket for Terraform state:
 
 - Account-specific bucket name
+- Object Lock enabled at bucket creation
 - Versioning enabled
 - AES-256 server-side encryption
 - Public access blocked
 - Terraform `prevent_destroy` lifecycle protection
 
-Each environment declares its own backend state key so development and production can be managed independently.
+Development and production declare independent state keys:
 
-> The backend configuration is intentionally kept separate from disposable environment resources and should be treated as long-lived infrastructure.
+```text
+dev/terraform.tfstate
+prod/terraform.tfstate
+```
+
+This separation allows the environments to be planned, applied, and destroyed independently.
+
+Backend values are supplied locally through an ignored `backend.hcl` file. The remote-state bootstrap is intentionally separated from disposable environment resources and should be treated as long-lived infrastructure.
 
 ---
 
@@ -363,9 +489,9 @@ Each environment declares its own backend state key so development and productio
 
 Install and configure:
 
-- Terraform 1.x
-- AWS CLI with an authenticated profile or supported credential method
-- Ansible Core
+- Terraform compatible with the repository's declared version constraints
+- AWS CLI with an authenticated profile or another supported credential method
+- Ansible Core and `ansible-lint` for local validation
 - An SSH client
 - An EC2 key pair whose private key is available locally
 
@@ -376,9 +502,9 @@ The repository intentionally ignores:
 - Terraform state
 - generated Ansible inventories
 - SSH private keys
-- local `ansible.cfg`
+- local environment and credential files
 
-Do not commit credentials, private keys, generated state, or environment-specific secret values.
+The portable project-level `ansible/ansible.cfg` is committed. Machine-specific private-key paths are not.
 
 ---
 
@@ -394,7 +520,7 @@ terraform plan
 terraform apply
 ```
 
-Record the backend bucket information returned by Terraform and configure the desired environment's local `backend.hcl`.
+Record the backend bucket information returned by Terraform and configure the selected environment's local `backend.hcl`.
 
 ### 2. Deploy an environment
 
@@ -414,7 +540,17 @@ Terraform provisions the environment and generates:
 ansible/inventories/<environment>/hosts.ini
 ```
 
-### 3. Validate the generated inventory
+### 3. Configure the local SSH key
+
+For the current terminal session:
+
+```bash
+export ANSIBLE_PRIVATE_KEY_FILE="$HOME/.ssh/<private-key>.pem"
+```
+
+The key remains outside the repository.
+
+### 4. Validate the generated inventory
 
 From `ansible`:
 
@@ -430,24 +566,54 @@ Test connectivity:
 ansible \
   -i inventories/dev/hosts.ini \
   web \
-  -u ec2-user \
-  --private-key ~/.ssh/<private-key>.pem \
   -m ansible.builtin.ping
 ```
 
-### 4. Configure the web tier
+### 5. Configure the web tier
 
 ```bash
 ansible-playbook \
   -i inventories/dev/hosts.ini \
-  -u ec2-user \
-  --private-key ~/.ssh/<private-key>.pem \
   playbooks/webserver.yml
 ```
 
-A second run should normally finish with `changed=0`, demonstrating idempotence.
+Run the playbook again to confirm idempotence.
 
-### 5. Destroy disposable environment resources
+### 6. Verify the EC2 workload identity
+
+```bash
+ansible \
+  -i inventories/dev/hosts.ini \
+  web \
+  -m ansible.builtin.command \
+  -a "aws sts get-caller-identity --output json --no-cli-pager"
+```
+
+The returned ARN should identify the environment-specific assumed application role rather than an IAM user.
+
+### 7. Verify least-privilege DynamoDB access
+
+Load the table name from the environment output and execute the test from EC2:
+
+```bash
+TABLE_NAME="$(terraform -chdir=../environments/dev output -raw table_name)"
+
+ansible \
+  -i inventories/dev/hosts.ini \
+  web \
+  -m ansible.builtin.command \
+  -a "aws dynamodb describe-table --table-name ${TABLE_NAME} --region us-east-1 --no-cli-pager"
+```
+
+Expected security behavior:
+
+```text
+Describe the assigned environment table  -> Allowed
+Use an ungranted broad DynamoDB action    -> Denied
+Access another environment's table        -> Denied
+```
+
+### 8. Destroy disposable environment resources
 
 From the selected environment directory:
 
@@ -464,10 +630,13 @@ The remote-state bootstrap is intentionally separate and is not part of the norm
 
 - SSH access defaults to the Terraform operator's detected public IP as a `/32` CIDR.
 - Application IAM permissions are scoped to the current environment's DynamoDB table ARN.
-- No static application access keys are stored in Terraform, Ansible, EC2 configuration, or the repository.
+- The IAM instance profile is attached through the Launch Template so replacement ASG instances inherit the same workload identity.
+- EC2 uses temporary role credentials instead of static application access keys.
 - State, variable files, backend details, private keys, and generated inventory files are excluded from version control.
-- S3 backend data is encrypted, versioned, and protected from public access.
-- Development and production resources use independent root modules and are intended to use independent state keys.
+- The committed Ansible configuration contains portable project settings only.
+- S3 backend data is encrypted, versioned, protected from public access, and protected against accidental Terraform destruction.
+- Development and production use independent root modules and state keys.
+- Pull requests are subject to automated Terraform and Ansible validation before merge into `main`.
 
 The disabled SSH host-key checking in the generated inventory is a deliberate convenience for frequently recreated lab instances. It is not recommended as a general production default.
 
@@ -483,6 +652,7 @@ The project is intentionally optimized for short-lived learning deployments:
 - No Application Load Balancer or managed relational database is currently deployed.
 - Development and production environments can be destroyed independently.
 - The backend bucket remains separate from disposable resources.
+- CI performs static checks without deploying duplicate validation environments.
 
 AWS resources can still incur charges. Plans should be reviewed before applying, and environments should be destroyed when they are no longer needed.
 
@@ -494,41 +664,44 @@ AWS resources can still incur charges. Plans should be reviewed before applying,
 | --- | --- |
 | Modular Terraform networking, security, compute, and monitoring | Implemented |
 | Separate development and production roots | Implemented |
-| S3 remote state bootstrap | Implemented |
+| Protected S3 remote-state bootstrap | Implemented |
 | Launch Template and Auto Scaling Group | Implemented |
 | Terraform-generated Ansible inventories | Implemented |
 | Reusable Ansible web-server role | Implemented and tested |
-| Jinja2 templates, role defaults, handlers, and HTTP verification | Implemented and tested |
-| Provisioned DynamoDB messages table | Implemented |
+| Jinja2 templates, defaults, handlers, and HTTP/content verification | Implemented and tested |
+| Environment-specific DynamoDB messages table | Implemented |
 | Table-scoped EC2 IAM role, policy, and instance profile | Implemented |
-| Instance profile attached to Launch Template | Pending integration |
-| EC2-to-DynamoDB positive and negative permission tests | Pending |
-| Stateless application using DynamoDB | Planned |
+| Instance profile attached to Launch Template | Implemented and tested |
+| EC2 temporary-role identity verification | Implemented and tested |
+| EC2-to-DynamoDB positive and negative permission tests | Implemented and tested |
+| GitHub Actions Terraform validation | Implemented |
+| GitHub Actions Ansible inventory, lint, and syntax validation | Implemented |
+| Pull-request workflow and required checks for `main` | Implemented |
+| Stateless workload using DynamoDB | Planned |
 | Multi-AZ networking and Application Load Balancer | Planned |
 | Autonomous configuration of replacement ASG instances | Planned |
 | AWS Budget guardrail | Planned |
-| CI/CD validation and security scanning | Planned |
+| Terraform security scanning | Planned |
+| GitLab merge-request validation pipeline | Planned |
 
 ---
 
 ## Roadmap
 
-### Near term
+### Delivery and quality
 
-- Pass the IAM instance-profile name into the compute module.
-- Attach the profile to the EC2 Launch Template.
-- Replace or refresh the ASG instance and confirm the profile is present.
-- Verify `sts get-caller-identity` and table access from EC2 without static credentials.
-- Confirm that the development role cannot access the production table.
+- Extend playbook syntax validation to discover future playbooks automatically.
+- Add Terraform security scanning with Checkov or another suitable static-analysis tool.
+- Reproduce the validation workflow as a GitLab merge-request pipeline.
+- Publish Terraform plan output as a review artifact without automatically applying it.
 - Add an AWS monthly budget guardrail.
 
-### Application and stateless-compute phase
+### Minimal workload validation
 
-- Add a small DynamoDB-backed application role.
-- Run the application as a managed systemd service.
-- Configure Apache as a reverse proxy.
-- Store persistent application data outside EC2.
-- Demonstrate that application data survives instance replacement.
+- Add a deliberately small Python workload only when needed to exercise the infrastructure.
+- Use the existing IAM role and DynamoDB table through the AWS SDK's automatic credential chain.
+- Run the workload through a managed `systemd` service.
+- Keep application code minimal and use it as an infrastructure test payload rather than a web-development project.
 
 ### Infrastructure expansion
 
@@ -536,14 +709,7 @@ AWS resources can still incur charges. Plans should be reviewed before applying,
 - Add an Application Load Balancer, target group, listener, and health checks.
 - Attach the target group to the Auto Scaling Group.
 - Add a real scaling policy rather than monitoring only.
-- Automate configuration of replacement instances through an ASG-compatible mechanism.
-
-### Delivery and quality
-
-- Add Terraform and Ansible linting.
-- Add Checkov or tfsec security scanning.
-- Add CI/CD validation for pull requests.
-- Improve module and role documentation.
+- Automate configuration of newly launched or replacement ASG instances.
 
 ---
 
@@ -554,20 +720,23 @@ AWS resources can still incur charges. Plans should be reviewed before applying,
 - Root and child module design
 - Cross-module inputs and outputs
 - Provider requirements and multiple providers
-- Remote state
+- Remote state and environment-specific state keys
 - Environment separation
 - Resource and data-source dependencies
 - Launch Templates and Auto Scaling Groups
+- IAM instance-profile integration
 - Terraform templates and generated files
 - IAM policy documents and least-privilege policies
 - DynamoDB table design
 - Cost-aware infrastructure decisions
+- Automated formatting and configuration validation
 
 ### Ansible
 
 - Static INI inventory structure
 - Terraform-generated inventories
 - Inventory groups and `group_vars`
+- Project-level `ansible.cfg`
 - Reusable roles
 - Role defaults
 - Jinja2 templates
@@ -575,19 +744,33 @@ AWS resources can still incur charges. Plans should be reviewed before applying,
 - Package and service management
 - HTTP verification and assertions
 - Idempotent configuration
+- Automated inventory, lint, and syntax validation
 
 ### AWS
 
 - VPC networking
-- EC2 and Auto Scaling
+- EC2 Launch Templates and Auto Scaling
 - Security Groups
 - IAM roles, policies, and instance profiles
+- Temporary EC2 role credentials
 - DynamoDB
 - CloudWatch
-- S3 state storage
+- Protected S3 state storage
+
+### CI/CD and Repository Governance
+
+- GitHub Actions workflow authoring
+- Event-based pull-request and push validation
+- Parallel validation jobs
+- Least-privilege workflow permissions
+- Concurrency controls
+- Pinned tool setup
+- Required status checks
+- Protected-branch workflow
+- Infrastructure-code quality gates
 
 ---
 
 ## About the Author
 
-This project is part of a professional transition from Windows infrastructure and PowerShell automation toward Cloud and DevOps engineering. It is being developed as a hands-on portfolio to strengthen and demonstrate practical Terraform, Ansible, AWS, infrastructure automation, and configuration-management skills.
+This project is part of a professional transition toward Cloud and DevOps engineering. It is being developed as a hands-on portfolio to strengthen and demonstrate practical Terraform, Ansible, AWS, IAM, CI/CD, infrastructure-automation, and configuration-management skills.
