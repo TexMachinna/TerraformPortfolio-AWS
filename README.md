@@ -4,7 +4,7 @@ A cost-conscious infrastructure and configuration-management portfolio built wit
 
 The project models the deployment of a web application platform across separate development and production environments. Terraform provisions and composes the AWS infrastructure, generates environment-specific Ansible inventories, and creates the initial application data and IAM resources. Ansible converts the EC2 instances into consistently configured Apache web servers through a reusable role.
 
-> **Project status:** Active development. The current implementation provisions the infrastructure, creates the DynamoDB and IAM resources, generates Ansible inventories, and configures the web tier. Attaching the application instance profile to the Launch Template and validating DynamoDB access from EC2 are the next integration steps.
+> **Project status:** Active development. The current implementation provisions the infrastructure, creates the DynamoDB and IAM resources, generates Ansible inventories, and configures the web tier.
 
 ---
 
@@ -82,7 +82,7 @@ graph TD
 - The Auto Scaling Group currently uses one public subnet and normally runs a single EC2 instance to minimize cost.
 - The private subnet is provisioned for future architecture work but is not currently used by the application tier.
 - DynamoDB is provisioned as the future persistent data layer for a stateless application.
-- The IAM role, table-scoped policy, and instance profile are defined. The profile still needs to be passed into the compute module and attached to the Launch Template.
+- The IAM role, table-scoped policy, and instance profile are defined. The profile gets attached to the Launch template through the compute module.
 - There is no Application Load Balancer or scaling policy yet. The current CloudWatch resource is an alarm only.
 
 ---
@@ -282,7 +282,7 @@ The permissions policy is restricted to the DynamoDB table ARN received from the
 - `dynamodb:PutItem`
 - `dynamodb:Query`
 
-No application access keys are stored in Terraform or Ansible. Attaching the profile to the Launch Template and testing the temporary EC2 credentials are the next tasks.
+No application access keys are stored in Terraform or Ansible. The profile gets attached using the Launch Template resource
 
 ---
 
@@ -516,7 +516,6 @@ AWS resources can still incur charges. Plans should be reviewed before applying,
 ### Near term
 
 - Pass the IAM instance-profile name into the compute module.
-- Attach the profile to the EC2 Launch Template.
 - Replace or refresh the ASG instance and confirm the profile is present.
 - Verify `sts get-caller-identity` and table access from EC2 without static credentials.
 - Confirm that the development role cannot access the production table.
