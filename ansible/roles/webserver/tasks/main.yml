@@ -22,7 +22,7 @@
 - name: Deploy portfolio landing page
   ansible.builtin.template:
     src: index.html.j2
-    dest: "{{ webserver_document_root }}/{{webserver_index_file}}"
+    dest: "{{ webserver_document_root }}/{{ webserver_index_file }}"
     owner: root
     group: root
     mode: "0644"
@@ -35,12 +35,12 @@
     url: "{{ webserver_verify_url }}"
     return_content: true
     status_code: 200
-  register: web_response
+  register: webserver_web_response
 
 - name: Verify expected page content
   ansible.builtin.assert:
     that:
-      - "page_title in web_response.content"
-      - "environment_name in web_response.content"
+      - "page_title in webserver_web_response.content"
+      - "environment_name in webserver_web_response.content"
     fail_msg: The webpage loaded, but the expected content was not found.
     success_msg: The portfolio page was deployed successfully.
